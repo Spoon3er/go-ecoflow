@@ -35,6 +35,8 @@ implemented:
 5. Smart Home Panel
 6. Wave Air Conditioner
 7. Glacier
+8. Stream (Home energy storage system)
+9. PowerKit (Modular power system)
 
 ## Features via Ecoflow Rest API
 
@@ -489,4 +491,34 @@ func (g *Glacier) SetIceMaking(ctx context.Context, enable SettingSwitcher, iceS
 func (g *Glacier) SetIceDetaching(ctx context.Context, enable SettingSwitcher)(*CmdSetResponse, error)
 func (g *Glacier) SetSensorDetectionBlocking(ctx context.Context, sensor GlacierSensorDetection)(*CmdSetResponse, error)
 func (g *Glacier) SetBatteryLowVoltageProtectionLevel(ctx context.Context, state SettingSwitcher, level GlacierVoltageProtectionLevel)(*CmdSetResponse, error)
+```
+
+### Stream
+
+API that can be used with an Ecoflow Stream (Home energy storage system)
+
+```go
+client := ecoflow.NewEcoflowClient(accessKey, secretKey)
+device := client.GetStream("STREAM_SERIAL_NUMBER")
+```
+
+The list of available functions:
+
+```
+func (s *Stream) GetSn()(string)
+
+func (s *Stream) GetAllParameters(ctx context.Context)
+func (s *Stream) GetParameter(ctx context.Context, params []string)(*GetCmdResponse, error)
+
+func (s *Stream) SetChannelOutput(ctx context.Context, channel StreamChannelType, enabled SettingSwitcher)(*CmdSetResponse, error)
+func (s *Stream) SetAllChannelsOutput(ctx context.Context, enabled SettingSwitcher)(*CmdSetResponse, error)
+func (s *Stream) SetPriorityMode(ctx context.Context, priority StreamPriorityMode)(*CmdSetResponse, error)
+func (s *Stream) SetBatterySOCRange(ctx context.Context, minSOC, maxSOC int)(*CmdSetResponse, error)
+func (s *Stream) SetMaxChargingPower(ctx context.Context, maxCharge int)(*CmdSetResponse, error)
+func (s *Stream) SetMaxDischargingPower(ctx context.Context, maxDischarge int)(*CmdSetResponse, error)
+func (s *Stream) SetStandbyTime(ctx context.Context, standbyTimeMinutes int)(*CmdSetResponse, error)
+func (s *Stream) SetBuzzerEnabled(ctx context.Context, enabled SettingSwitcher)(*CmdSetResponse, error)
+func (s *Stream) SetLCDTimeout(ctx context.Context, timeoutSeconds int)(*CmdSetResponse, error)
+func (s *Stream) SetGridFrequency(ctx context.Context, frequency GridFrequency)(*CmdSetResponse, error)
+func (s *Stream) ResetDevice(ctx context.Context)(*CmdSetResponse, error)
 ```

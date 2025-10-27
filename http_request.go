@@ -27,7 +27,7 @@ type HttpRequest struct {
 	httpClient        *http.Client
 	method            string
 	uri               string
-	requestParameters map[string]interface{}
+	requestParameters map[string]any
 	accessKey         string
 	secretKey         string
 	getSignParameters func() *signParameters //required for unit testing
@@ -38,12 +38,12 @@ type HttpRequest struct {
 // - httpClient: The HTTP client to use for making the request.
 // - method: The HTTP method to use for the request (e.g., GET, POST).
 // - uri: The URI of the request.
-// - params: The request parameters as a map[string]interface{}.
+// - params: The request parameters as a map[string]any.
 // - accessKey: The access key for authentication.
 // - secretKey: The secret key for authentication.
 // Returns:
 // - httpRequest: The new HttpRequest object.
-func NewHttpRequest(httpClient *http.Client, method string, uri string, params map[string]interface{}, accessKey, secretKey string) *HttpRequest {
+func NewHttpRequest(httpClient *http.Client, method string, uri string, params map[string]any, accessKey, secretKey string) *HttpRequest {
 	r := &HttpRequest{
 		httpClient:        httpClient,
 		method:            method,
@@ -118,7 +118,7 @@ func (r *HttpRequest) Execute(ctx context.Context) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	} else if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(fmt.Sprintf("response status is failed|url=%s, statusCode=%s", requestURI, resp.Status))
+		return nil, fmt.Errorf("response status is failed|url=%s, statusCode=%s", requestURI, resp.Status)
 	}
 	return io.ReadAll(resp.Body)
 }
@@ -178,7 +178,7 @@ func (r *HttpRequest) getKeyValueString(queryString string, nonce string, timest
 // E.g. deviceInfo.id=1&deviceList[0].id=1&deviceList[1].id=2&ids[0]=1&ids[1]=2&ids[2]=3&name=demo1
 // See step 1 and step 2 here: https://developer-eu.ecoflow.com/us/document/generalInfo
 // This implementation uses a recursion to get all request parameters (even nested json structure) and creates an expected query string
-func generateQueryParams(data map[string]interface{}) string {
+func generateQueryParams(data map[string]any) string {
 	var result []string
 
 	// Process top-level map keys
@@ -200,22 +200,22 @@ func generateQueryParams(data map[string]interface{}) string {
 // Returns:
 // - result: A slice of strings containing the processed values.
 // Possible value types and their processing:
-// - map[string]interface{}: Recursively process nested maps by appending the nested key to the prefix.
-// - []interface{}: Recursively process items in arrays by appending the index to the prefix.
+// - map[string]any: Recursively process nested maps by appending the nested key to the prefix.
+// - []any: Recursively process items in arrays by appending the index to the prefix.
 // - string: Append the key-value pair to the result slice.
 // - int: Append the key-value pair to the result slice after converting the int to a string.
 // - float64: Append the key-value pair to the result slice after converting the float64 to a string.
 // - bool: Append the key-value pair to the result slice after converting the bool to a string.
-func processValue(prefix string, value interface{}) []string {
+func processValue(prefix string, value any) []string {
 	var result []string
 	switch v := value.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		for k, nestedValue := range v {
 			// Recursively process nested maps
 			nestedPrefix := prefix + "." + k
 			result = append(result, processValue(nestedPrefix, nestedValue)...)
 		}
-	case []interface{}:
+	case []any:
 		for i, item := range v {
 			// Recursively process items in arrays
 			nestedPrefix := prefix + "[" + strconv.Itoa(i) + "]"

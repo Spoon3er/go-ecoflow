@@ -10,11 +10,12 @@ import (
 )
 
 const (
-	ecoflowApiUrl        = "https://api.ecoflow.com"
-	deviceListUrl        = "/iot-open/sign/device/list"
-	getAllQuoteUrl       = "/iot-open/sign/device/quota/all"
-	setDeviceFunctionUrl = "/iot-open/sign/device/quota"
-	getDeviceFunctionUrl = "/iot-open/sign/device/quota"
+	ecoflowApiUrl              = "https://api.ecoflow.com"
+	deviceListUrl              = "/iot-open/sign/device/list"
+	getAllQuoteUrl             = "/iot-open/sign/device/quota/all"
+	setDeviceFunctionUrl       = "/iot-open/sign/device/quota"
+	getDeviceFunctionUrl       = "/iot-open/sign/device/quota"
+	getDeviceHistoricalDataUrl = "/iot-open/sign/device/quota/data"
 )
 
 type GridFrequency int
@@ -132,6 +133,13 @@ func (c *Client) GetPowerKit(sn string, moduleSn string) *PowerKit {
 	}
 }
 
+func (c *Client) GetStream(sn string) *Stream {
+	return &Stream{
+		c:  c,
+		sn: sn,
+	}
+}
+
 type SettingSwitcher int
 
 const (
@@ -168,18 +176,30 @@ func (c *Client) GetDeviceList(ctx context.Context) (*DeviceListResponse, error)
 	}
 
 	if deviceResponse.Code != "0" {
-		return &deviceResponse, errors.New(fmt.Sprintf("can't get device list, error code: %s, error message: %s", deviceResponse.Code, deviceResponse.Message))
+		return &deviceResponse, fmt.Errorf("can't get device list, error code: %s, error message: %s", deviceResponse.Code, deviceResponse.Message)
 	}
 	return &deviceResponse, nil
 }
 
 type CmdSetRequest struct {
-	Id          string                 `json:"id"`
-	OperateType string                 `json:"operateType,omitempty"`
-	ModuleType  ModuleType             `json:"moduleType,omitempty"`
-	CmdCode     string                 `json:"cmdCode,omitempty"`
-	Sn          string                 `json:"sn"`
-	Params      map[string]interface{} `json:"params"`
+	Id          string         `json:"id"`
+	OperateType string         `json:"operateType,omitempty"`
+	ModuleType  ModuleType     `json:"moduleType,omitempty"`
+	CmdCode     string         `json:"cmdCode,omitempty"`
+	Sn          string         `json:"sn"`
+	Params      map[string]any `json:"params"`
+}
+
+type CmdUltraSetRequest struct {
+	Id      string         `json:"id"`
+	CmdId   int            `json:"cmdId"`
+	CmdFunc int            `json:"cmdFunc"`
+	DirDest int            `json:"dirDest"`
+	DirSrc  int            `json:"dirSrc"`
+	Dest    int            `json:"dest"`
+	NeedAck bool           `json:"needAck"`
+	Sn      string         `json:"sn"`
+	Params  map[string]any `json:"params"`
 }
 
 type CmdSetResponse struct {
@@ -187,8 +207,8 @@ type CmdSetResponse struct {
 	Message string `json:"message"`
 }
 
-func getParamsEnabled(enabled SettingSwitcher) map[string]interface{} {
-	params := make(map[string]interface{})
+func getParamsEnabled(enabled SettingSwitcher) map[string]any {
+	params := make(map[string]any)
 	params["enabled"] = enabled
 	return params
 }
@@ -196,7 +216,7 @@ func getParamsEnabled(enabled SettingSwitcher) map[string]interface{} {
 // SetDeviceParameter exporter function to set device's settings.The request is a JSON map that will be sent to the server
 // Each device has its own request structure so this function works for all types of devices.
 // This function can be used even if your device type is not supported by this library
-func (c *Client) SetDeviceParameter(ctx context.Context, request map[string]interface{}) (*CmdSetResponse, error) {
+func (c *Client) SetDeviceParameter(ctx context.Context, request map[string]any) (*CmdSetResponse, error) {
 	slog.Debug("SetDeviceParameter", "request", request)
 
 	r := NewHttpRequest(c.httpClient, "PUT", c.baseUrl+setDeviceFunctionUrl, request, c.accessToken, c.secretToken)
@@ -227,11 +247,11 @@ type GetParamsList struct {
 }
 
 type GetCmdResponse struct {
-	Code            string                 `json:"code"`
-	Message         string                 `json:"message"`
-	Data            map[string]interface{} `json:"data"`
-	EagleEyeTraceID string                 `json:"eagleEyeTraceId"`
-	Tid             string                 `json:"tid"`
+	Code            string         `json:"code"`
+	Message         string         `json:"message"`
+	Data            map[string]any `json:"data"`
+	EagleEyeTraceID string         `json:"eagleEyeTraceId"`
+	Tid             string         `json:"tid"`
 }
 
 // GetDeviceParameters returns specified parameters for device
@@ -256,7 +276,7 @@ func (c *Client) GetDeviceParameters(ctx context.Context, deviceSN string, param
 		return nil, err
 	}
 
-	var reqParams map[string]interface{}
+	var reqParams map[string]any
 	err = json.Unmarshal(jsonData, &reqParams)
 	if err != nil {
 		return nil, err
@@ -277,7 +297,7 @@ func (c *Client) GetDeviceParameters(ctx context.Context, deviceSN string, param
 	}
 
 	if getCmdResponse.Code != "0" {
-		return getCmdResponse, errors.New(fmt.Sprintf("can't get parameters, error code %s", getCmdResponse.Code))
+		return getCmdResponse, fmt.Errorf("can't get parameters, error code %s", getCmdResponse.Code)
 	}
 
 	return getCmdResponse, nil
@@ -285,12 +305,12 @@ func (c *Client) GetDeviceParameters(ctx context.Context, deviceSN string, param
 
 // GetDeviceAllParameters executes a request to get the raw parameters ("as is") for a specific device.
 // This function works for all types of devices.
-// It returns a map[string]interface{} containing the parameters and an error if any. The value type is mostly int, for some parameters it's float64 or []int
+// It returns a map[string]any containing the parameters and an error if any. The value type is mostly int, for some parameters it's float64 or []int
 // If the response parameter "code" is not "0", then there is an error and the error message is returned.
 // The parameters are taken from the Ecoflow response, "data" field
 // If the response is not valid or cannot be processed, an error is returned.
-func (c *Client) GetDeviceAllParameters(ctx context.Context, deviceSn string) (map[string]interface{}, error) {
-	requestParams := make(map[string]interface{})
+func (c *Client) GetDeviceAllParameters(ctx context.Context, deviceSn string) (map[string]any, error) {
+	requestParams := make(map[string]any)
 	requestParams["sn"] = deviceSn
 
 	request := NewHttpRequest(c.httpClient, "GET", c.baseUrl+getAllQuoteUrl, requestParams, c.accessToken, c.secretToken)
@@ -300,21 +320,90 @@ func (c *Client) GetDeviceAllParameters(ctx context.Context, deviceSn string) (m
 		return nil, err
 	}
 
-	var jsonData map[string]interface{}
+	var jsonData map[string]any
 	err = json.Unmarshal(response, &jsonData)
 	if err != nil {
 		return nil, err
 	}
 
 	if code, ok := jsonData["code"].(string); !ok || code != "0" {
-		return nil, errors.New(fmt.Sprintf("can't get parameters, error code %s", code))
+		return nil, fmt.Errorf("can't get parameters, error code %s", code)
 	}
 
-	dataMap, ok := jsonData["data"].(map[string]interface{})
+	dataMap, ok := jsonData["data"].(map[string]any)
 
 	if !ok {
 		return nil, errors.New("response is not valid, can't process it")
 	}
 
 	return dataMap, err
+}
+
+type GetHistoricalDataResponse struct {
+	Code            string           `json:"code"`
+	Message         string           `json:"message"`
+	Data            []GetCmdResponse `json:"data"`
+	EagleEyeTraceID string           `json:"eagleEyeTraceId"`
+	Tid             string           `json:"tid"`
+}
+
+type GetHistoricalDataParams struct {
+	BeginTime string `json:"beginTime"`
+	EndTime   string `json:"endTime"`
+	Code      string `json:"code"`
+}
+
+type GetHistoricalDataRequest struct {
+	Sn     string                  `json:"sn"`
+	Params GetHistoricalDataParams `json:"params"`
+}
+
+// GetDeviceHistoricalData retrieves historical data for a specific device based on provided parameters.
+// It requires the device serial number and a list of parameters to fetch historical data for.
+// If the response parameter "code" is not "0", then there is an error and the error message is returned.
+
+func (c *Client) GetDeviceHistoricalData(ctx context.Context, deviceSn string, params *GetHistoricalDataParams) (*GetHistoricalDataResponse, error) {
+	if params == nil {
+		return nil, errors.New("parameters are mandatory")
+	}
+	if deviceSn == "" {
+		return nil, errors.New("device SN is mandatory")
+	}
+
+	req := GetHistoricalDataRequest{
+		Sn:     deviceSn,
+		Params: *params,
+	}
+
+	jsonData, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	var reqParams map[string]any
+	err = json.Unmarshal(jsonData, &reqParams)
+	if err != nil {
+		return nil, err
+	}
+
+	r := NewHttpRequest(c.httpClient, "POST", c.baseUrl+getDeviceHistoricalDataUrl, reqParams, c.accessToken, c.secretToken)
+
+	response, err := r.Execute(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var getHistoricalDataResponse *GetHistoricalDataResponse
+
+	err = json.Unmarshal(response, &getHistoricalDataResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	if getHistoricalDataResponse.Code != "0" {
+		return getHistoricalDataResponse, fmt.Errorf("can't get historical data, error code %s", getHistoricalDataResponse.Code)
+	}
+
+	return getHistoricalDataResponse, nil
+
 }

@@ -68,7 +68,7 @@ func (c *WaveAirConditioner) GetSn() string {
 // SetMainMode Set main mode(0: Cool, 1: Heat, 2: Fan)
 // { "id":123456789, "version":"1.0", "sn":"KT21ZCH2ZF170012", "moduleType":1, "operateType":"mainMode", "params":{ "mainMode":1 } }
 func (c *WaveAirConditioner) SetMainMode(ctx context.Context, mainMode ConditionerMainMode) (*CmdSetResponse, error) {
-	params := make(map[string]interface{})
+	params := make(map[string]any)
 	params["mainMode"] = mainMode
 	return c.setParameter(ctx, "mainMode", ModuleTypePd, params)
 }
@@ -76,7 +76,7 @@ func (c *WaveAirConditioner) SetMainMode(ctx context.Context, mainMode Condition
 // SetSubMode Set sub-mode(0: Max, 1: Sleep, 2: Eco, 3: Manual)
 // { "id":123456789, "version":"1.0", "sn":"KT21ZCH2ZF170012", "operateType":"subMode", "params":{ "subMode":3 } }
 func (c *WaveAirConditioner) SetSubMode(ctx context.Context, subMode ConditionerSubMode) (*CmdSetResponse, error) {
-	params := make(map[string]interface{})
+	params := make(map[string]any)
 	params["subMode"] = subMode
 	return c.setParameter(ctx, "subMode", -1, params)
 }
@@ -84,7 +84,7 @@ func (c *WaveAirConditioner) SetSubMode(ctx context.Context, subMode Conditioner
 // SetTemperatureUnit Set unit of temperature(0: Celsius, 1: Fahrenheit)
 // { "id":123456789, "version":"1.0", "sn":"KT21ZCH2ZF170012", "operateType":"tempSys", "params":{ "mode":1 } }
 func (c *WaveAirConditioner) SetTemperatureUnit(ctx context.Context, mode TemperatureUnit) (*CmdSetResponse, error) {
-	params := make(map[string]interface{})
+	params := make(map[string]any)
 	params["mode"] = mode
 	return c.setParameter(ctx, "tempSys", -1, params)
 }
@@ -92,7 +92,7 @@ func (c *WaveAirConditioner) SetTemperatureUnit(ctx context.Context, mode Temper
 // SetScreenTimeout Set screen timeout (time unit: sec; Always on: "idleTime": 0, "idleMode": 0)
 // { "id":123456789, "version":"1.0", "sn":"KT21ZCH2ZF170012", "operateType":"display", "params":{ "idleTime":5, "idleMode":1 } }
 func (c *WaveAirConditioner) SetScreenTimeout(ctx context.Context, idleTime int, hasScreenTimeout SettingSwitcher) (*CmdSetResponse, error) {
-	params := make(map[string]interface{})
+	params := make(map[string]any)
 	params["idleTime"] = idleTime
 	params["idleMode"] = hasScreenTimeout
 	return c.setParameter(ctx, "display", -1, params)
@@ -104,7 +104,7 @@ func (c *WaveAirConditioner) SetTimer(ctx context.Context, timeSet int, timeEn S
 	if timeSet < 0 || timeSet > 65535 {
 		return nil, errors.New("timeSet is out of range. Range 0:65535")
 	}
-	params := make(map[string]interface{})
+	params := make(map[string]any)
 	params["timeSet"] = timeSet
 	params["timeEn"] = timeEn
 	return c.setParameter(ctx, "sacTiming", -1, params)
@@ -113,7 +113,7 @@ func (c *WaveAirConditioner) SetTimer(ctx context.Context, timeSet int, timeEn S
 // SetEnableBuzzer Enable buzzer (0: Disable; 1: Enable)
 // { "id":123456789, "version":"1.0", "sn":"KT21ZCH2ZF170012", "operateType":"beepEn", "params":{ "en":1 } }
 func (c *WaveAirConditioner) SetEnableBuzzer(ctx context.Context, enabled SettingSwitcher) (*CmdSetResponse, error) {
-	params := make(map[string]interface{})
+	params := make(map[string]any)
 	params["en"] = enabled
 	return c.setParameter(ctx, "beepEn", -1, params)
 }
@@ -121,7 +121,7 @@ func (c *WaveAirConditioner) SetEnableBuzzer(ctx context.Context, enabled Settin
 // SetTemperature Set temperature(16-30 ℃）
 // { "id":123456789, "version":"1.0", "sn":"KT21ZCH2ZF170012", "moduleType":1, "operateType":"setTemp", "params":{ "setTemp":27 } }
 func (c *WaveAirConditioner) SetTemperature(ctx context.Context, setTemp int) (*CmdSetResponse, error) {
-	params := make(map[string]interface{})
+	params := make(map[string]any)
 	params["setTemp"] = setTemp
 	return c.setParameter(ctx, "setTemp", ModuleTypePd, params)
 }
@@ -129,7 +129,7 @@ func (c *WaveAirConditioner) SetTemperature(ctx context.Context, setTemp int) (*
 // SetTemperatureDisplay Set temperature display (0: Display ambient temperature; 1: Display air outlet temperature)
 // { "id":123456789, "version":"1.0", "sn":"KT21ZCH2ZF170012", "moduleType":1, "operateType":"tempDisplay", "params":{ "tempDisplay":0 } }
 func (c *WaveAirConditioner) SetTemperatureDisplay(ctx context.Context, tempDisplay ConditionerTemperatureDisplayMode) (*CmdSetResponse, error) {
-	params := make(map[string]interface{})
+	params := make(map[string]any)
 	params["tempDisplay"] = tempDisplay
 	return c.setParameter(ctx, "setTemp", ModuleTypePd, params)
 }
@@ -137,7 +137,7 @@ func (c *WaveAirConditioner) SetTemperatureDisplay(ctx context.Context, tempDisp
 // SetWindSpeed Set wind speed (0: Low; 1: Medium; 2: High)
 // { "id":123456789, "version":"1.0", "sn":"KT21ZCH2ZF170012", "operateType":"fanValue", "params":{ "fanValue":1 } }
 func (c *WaveAirConditioner) SetWindSpeed(ctx context.Context, fanValue ConditionerWindSpeed) (*CmdSetResponse, error) {
-	params := make(map[string]interface{})
+	params := make(map[string]any)
 	params["fanValue"] = fanValue
 	return c.setParameter(ctx, "fanValue", -1, params)
 }
@@ -150,7 +150,7 @@ func (c *WaveAirConditioner) SetAutomaticDrainage(ctx context.Context, wteFthEn 
 	if wteFthEn < 0 || wteFthEn > 3 {
 		return nil, errors.New("wteFthEn is out of range. Range 0:3")
 	}
-	params := make(map[string]interface{})
+	params := make(map[string]any)
 	params["wteFthEn"] = wteFthEn
 
 	return c.setParameter(ctx, "wteFthEn", -1, params)
@@ -159,7 +159,7 @@ func (c *WaveAirConditioner) SetAutomaticDrainage(ctx context.Context, wteFthEn 
 // SetLightStripMode Light strip settings (0: Follow the screen; 1: Always on; 2: Always off; other parameters indicate “Always off”)
 // { "id":123456789, "version":"1.0", "sn":"KT21ZCH2ZF170012", "moduleType":1, "operateType":"rgbState", "params":{ "rgbState":1 } }
 func (c *WaveAirConditioner) SetLightStripMode(ctx context.Context, rgbState ConditionerLightStripMode) (*CmdSetResponse, error) {
-	params := make(map[string]interface{})
+	params := make(map[string]any)
 	params["rgbState"] = rgbState
 
 	return c.setParameter(ctx, "rgbState", ModuleTypePd, params)
@@ -168,7 +168,7 @@ func (c *WaveAirConditioner) SetLightStripMode(ctx context.Context, rgbState Con
 // SetPowerMode Remote startup/shutdown (1: Startup; 2: Standby; 3: Shutdown)
 // { "id":123456789, "version":"1.0", "sn":"KT21ZCH2ZF170012", "moduleType":1, "operateType":"powerMode", "params":{ "powerMode":2 } }
 func (c *WaveAirConditioner) SetPowerMode(ctx context.Context, powerMode ConditionerPowerMode) (*CmdSetResponse, error) {
-	params := make(map[string]interface{})
+	params := make(map[string]any)
 	params["powerMode"] = powerMode
 
 	return c.setParameter(ctx, "powerMode", ModuleTypePd, params)
@@ -178,11 +178,11 @@ func (c *WaveAirConditioner) GetParameter(ctx context.Context, params []string) 
 	return c.c.GetDeviceParameters(ctx, c.sn, params)
 }
 
-func (c *WaveAirConditioner) GetAllParameters(ctx context.Context) (map[string]interface{}, error) {
+func (c *WaveAirConditioner) GetAllParameters(ctx context.Context) (map[string]any, error) {
 	return c.c.GetDeviceAllParameters(ctx, c.sn)
 }
 
-func (c *WaveAirConditioner) setParameter(ctx context.Context, opType string, modType ModuleType, params map[string]interface{}) (*CmdSetResponse, error) {
+func (c *WaveAirConditioner) setParameter(ctx context.Context, opType string, modType ModuleType, params map[string]any) (*CmdSetResponse, error) {
 	cmdReq := CmdSetRequest{
 		Id:          fmt.Sprint(time.Now().UnixMilli()),
 		OperateType: opType,
@@ -199,7 +199,7 @@ func (c *WaveAirConditioner) setParameter(ctx context.Context, opType string, mo
 		return nil, err
 	}
 
-	var req map[string]interface{}
+	var req map[string]any
 
 	err = json.Unmarshal(jsonData, &req)
 	if err != nil {

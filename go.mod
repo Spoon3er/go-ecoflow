@@ -1,4 +1,4 @@
-module github.com/tess1o/go-ecoflow
+module github.com/Spoon3er/go-ecoflow
 
 go 1.22
 

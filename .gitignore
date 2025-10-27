@@ -1,2 +1,8 @@
 .idea
 *.iml
+*.env
+.env.*local
+.vscode
+.DS_Store
+copilot-instructions.md
+go-ecoflow.code-workspace
