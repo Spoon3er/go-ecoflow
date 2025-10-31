@@ -6,10 +6,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	mqtt "github.com/eclipse/paho.mqtt.golang"
-	"github.com/tess1o/go-ecoflow"
 	"log"
 	"time"
+
+	"github.com/Spoon3er/go-ecoflow"
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 func main() {

@@ -31,10 +31,10 @@ type MqttCredentialsResponse struct {
 // MqttDeviceParams represents the device parameters received from MQTT topic
 // Params map is a key/value map where key is parameter name and value is its value
 type MqttDeviceParams struct {
-	Id         int64                  `json:"id"`
-	Timestamp  int                    `json:"timestamp"`
-	ModuleType string                 `json:"moduleType"`
-	Params     map[string]interface{} `json:"params"`
+	Id         int64          `json:"id"`
+	Timestamp  int            `json:"timestamp"`
+	ModuleType string         `json:"moduleType"`
+	Params     map[string]any `json:"params"`
 }
 
 // MqttLoginResponse when we log in to ecoflow rest api via email/password.

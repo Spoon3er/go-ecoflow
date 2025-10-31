@@ -505,20 +505,24 @@ device := client.GetStream("STREAM_SERIAL_NUMBER")
 The list of available functions:
 
 ```
-func (s *Stream) GetSn()(string)
+// Basic device functions
+func (s *Stream) GetSn() string
+func (s *Stream) GetParameter(ctx context.Context, params []string) (*GetCmdResponse, error)
+func (s *Stream) GetAllParameters(ctx context.Context) (map[string]any, error)
 
-func (s *Stream) GetAllParameters(ctx context.Context)
-func (s *Stream) GetParameter(ctx context.Context, params []string)(*GetCmdResponse, error)
+// Device control functions
+func (s *Stream) SetPowerSocket(ctx context.Context, switchDevice SwitchDevice, action bool) (*CmdSetResponse, error)
+func (s *Stream) SetBackupReserveLevel(ctx context.Context, lvl int) (*CmdSetResponse, error)
+func (s *Stream) SetChargeLimit(ctx context.Context, limit int) (*CmdSetResponse, error)
+func (s *Stream) SetDisChargeLimit(ctx context.Context, limit int) (*CmdSetResponse, error)
+func (s *Stream) SetOperatingMode(ctx context.Context, mode operatingMode, value bool) (*CmdSetResponse, error)
+func (s *Stream) SetFeedInControl(ctx context.Context, value string) (*CmdSetResponse, error)
 
-func (s *Stream) SetChannelOutput(ctx context.Context, channel StreamChannelType, enabled SettingSwitcher)(*CmdSetResponse, error)
-func (s *Stream) SetAllChannelsOutput(ctx context.Context, enabled SettingSwitcher)(*CmdSetResponse, error)
-func (s *Stream) SetPriorityMode(ctx context.Context, priority StreamPriorityMode)(*CmdSetResponse, error)
-func (s *Stream) SetBatterySOCRange(ctx context.Context, minSOC, maxSOC int)(*CmdSetResponse, error)
-func (s *Stream) SetMaxChargingPower(ctx context.Context, maxCharge int)(*CmdSetResponse, error)
-func (s *Stream) SetMaxDischargingPower(ctx context.Context, maxDischarge int)(*CmdSetResponse, error)
-func (s *Stream) SetStandbyTime(ctx context.Context, standbyTimeMinutes int)(*CmdSetResponse, error)
-func (s *Stream) SetBuzzerEnabled(ctx context.Context, enabled SettingSwitcher)(*CmdSetResponse, error)
-func (s *Stream) SetLCDTimeout(ctx context.Context, timeoutSeconds int)(*CmdSetResponse, error)
-func (s *Stream) SetGridFrequency(ctx context.Context, frequency GridFrequency)(*CmdSetResponse, error)
-func (s *Stream) ResetDevice(ctx context.Context)(*CmdSetResponse, error)
+// Historical data functions
+func (s *Stream) GetEnergyIndependence(ctx context.Context, beginTime, endTime time.Time) (*GetHistoricalDataResponse, error)
+func (s *Stream) GetEnvironmentalImpact(ctx context.Context, beginTime, endTime time.Time) (*GetHistoricalDataResponse, error)
+func (s *Stream) GetTotalEnergySavings(ctx context.Context, beginTime, endTime time.Time) (*GetHistoricalDataResponse, error)
+func (s *Stream) GetElectricityConsumption(ctx context.Context, beginTime, endTime time.Time) (*GetHistoricalDataResponse, error)
+func (s *Stream) GetGrid(ctx context.Context, beginTime, endTime time.Time) (*GetHistoricalDataResponse, error)
+func (s *Stream) GetBatteryChargingDischargingPower(ctx context.Context, beginTime, endTime time.Time) (*GetHistoricalDataResponse, error)
 ```

@@ -140,6 +140,13 @@ func (c *Client) GetStream(sn string) *Stream {
 	}
 }
 
+func (c *Client) GetSmartMeter(sn string) *SmartMeter {
+	return &SmartMeter{
+		c:  c,
+		sn: sn,
+	}
+}
+
 type SettingSwitcher int
 
 const (
