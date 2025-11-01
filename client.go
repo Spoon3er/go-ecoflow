@@ -44,6 +44,7 @@ const (
 
 type Client struct {
 	httpClient  *http.Client //can be customized if required
+	mqttClient  *MqttClient  //initialized via InitializeMqtt()
 	accessToken string
 	secretToken string
 	baseUrl     string
@@ -145,6 +146,29 @@ func (c *Client) GetSmartMeter(sn string) *SmartMeter {
 		c:  c,
 		sn: sn,
 	}
+}
+
+// InitializeMqtt initializes the MQTT client using the same AccessKey/SecretKey credentials
+// This method fetches MQTT credentials from /iot-open/sign/certification and creates the MQTT client
+func (c *Client) InitializeMqtt(ctx context.Context, config MqttClientConfiguration) error {
+	mqttConfig, err := getMqttCredentials(ctx, c)
+	if err != nil {
+		return fmt.Errorf("failed to get MQTT credentials: %w", err)
+	}
+
+	c.mqttClient = newMqttClient(mqttConfig, config)
+
+	if err := c.mqttClient.Connect(); err != nil {
+		return fmt.Errorf("failed to connect to MQTT broker: %w", err)
+	}
+
+	return nil
+}
+
+// GetMqttClient returns the initialized MQTT client
+// Returns nil if InitializeMqtt has not been called
+func (c *Client) GetMqttClient() *MqttClient {
+	return c.mqttClient
 }
 
 type SettingSwitcher int

@@ -212,3 +212,120 @@ func (s *Stream) setParameter(ctx context.Context, params map[string]any) (*CmdS
 
 	return s.c.SetDeviceParameter(ctx, req)
 }
+
+// MQTT Quota Parameters for Stream devices
+// These types represent the real-time data received from MQTT quota topic:
+// /open/{certificateAccount}/{sn}/quota
+
+// StreamPowerParams holds all power-related parameters for Stream devices
+type StreamPowerParams struct {
+	PowGetSysGrid             *float64 `json:"powGetSysGrid,omitempty"`
+	PowGetSysLoad             *float64 `json:"powGetSysLoad,omitempty"`
+	PowGetSysLoadFromGrid     *float64 `json:"powGetSysLoadFromGrid,omitempty"`
+	PowGetSysLoadFromBp       *float64 `json:"powGetSysLoadFromBp,omitempty"`
+	PowGetSysLoadFromPv       *float64 `json:"powGetSysLoadFromPv,omitempty"`
+	PowGetBpCms               *float64 `json:"powGetBpCms,omitempty"`
+	PowGetPv                  *float64 `json:"powGetPv,omitempty"`
+	PowGetPv2                 *float64 `json:"powGetPv2,omitempty"`
+	PowGetPv3                 *float64 `json:"powGetPv3,omitempty"`
+	PowGetPv4                 *float64 `json:"powGetPv4,omitempty"`
+	PowGetPvSum               *float64 `json:"powGetPvSum,omitempty"`
+	PowGetSchuko1             *float64 `json:"powGetSchuko1,omitempty"`
+	PowGetSchuko2             *float64 `json:"powGetSchuko2,omitempty"`
+	PowSysAcInMax             *float64 `json:"powSysAcInMax,omitempty"`
+	PowSysAcOutMax            *float64 `json:"powSysAcOutMax,omitempty"`
+	SocketMeasurePower        *float64 `json:"socketMeasurePower,omitempty"`
+	GridConnectionPower       *float64 `json:"gridConnectionPower,omitempty"`
+	SysGridConnectionPower    *float64 `json:"sysGridConnectionPower,omitempty"`
+	PowConsumptionMeasurement *float64 `json:"powConsumptionMeasurement,omitempty"`
+}
+
+// StreamBMSParams holds Battery Management System parameters for Stream devices
+type StreamBMSParams struct {
+	BmsBattSoc     *float64 `json:"bmsBattSoc,omitempty"`
+	BmsBattSoh     *float64 `json:"bmsBattSoh,omitempty"`
+	BmsDesignCap   *float64 `json:"bmsDesignCap,omitempty"`
+	BmsBattHeating *bool    `json:"bmsBattHeating,omitempty"`
+	BmsChgDsgState *float64 `json:"bmsChgDsgState,omitempty"`
+	BmsChgRemTime  *float64 `json:"bmsChgRemTime,omitempty"`
+	BmsDsgRemTime  *float64 `json:"bmsDsgRemTime,omitempty"`
+	BmsMaxCellTemp *float64 `json:"bmsMaxCellTemp,omitempty"`
+	BmsMinCellTemp *float64 `json:"bmsMinCellTemp,omitempty"`
+	BmsMaxMosTemp  *float64 `json:"bmsMaxMosTemp,omitempty"`
+	BmsMinMosTemp  *float64 `json:"bmsMinMosTemp,omitempty"`
+}
+
+// StreamCMSParams holds Central Management System parameters for Stream devices
+type StreamCMSParams struct {
+	CmsBattSoc        *float64 `json:"cmsBattSoc,omitempty"`
+	CmsBattSoh        *float64 `json:"cmsBattSoh,omitempty"`
+	CmsBattFullEnergy *float64 `json:"cmsBattFullEnergy,omitempty"`
+	CmsBattPowInMax   *float64 `json:"cmsBattPowInMax,omitempty"`
+	CmsBattPowOutMax  *float64 `json:"cmsBattPowOutMax,omitempty"`
+	CmsBmsRunState    *float64 `json:"cmsBmsRunState,omitempty"`
+	CmsChgDsgState    *float64 `json:"cmsChgDsgState,omitempty"`
+	CmsChgRemTime     *float64 `json:"cmsChgRemTime,omitempty"`
+	CmsDsgRemTime     *float64 `json:"cmsDsgRemTime,omitempty"`
+	CmsMaxChgSoc      *float64 `json:"cmsMaxChgSoc,omitempty"`
+	CmsMinDsgSoc      *float64 `json:"cmsMinDsgSoc,omitempty"`
+}
+
+// StreamPVParams holds Photovoltaic input parameters for Stream devices
+type StreamPVParams struct {
+	PlugInInfoPvVol   *float64 `json:"plugInInfoPvVol,omitempty"`
+	PlugInInfoPvAmp   *float64 `json:"plugInInfoPvAmp,omitempty"`
+	PlugInInfoPvFlag  *bool    `json:"plugInInfoPvFlag,omitempty"`
+	PlugInInfoPv2Vol  *float64 `json:"plugInInfoPv2Vol,omitempty"`
+	PlugInInfoPv2Amp  *float64 `json:"plugInInfoPv2Amp,omitempty"`
+	PlugInInfoPv2Flag *bool    `json:"plugInInfoPv2Flag,omitempty"`
+	PlugInInfoPv3Vol  *float64 `json:"plugInInfoPv3Vol,omitempty"`
+	PlugInInfoPv3Amp  *float64 `json:"plugInInfoPv3Amp,omitempty"`
+	PlugInInfoPv3Flag *bool    `json:"plugInInfoPv3Flag,omitempty"`
+	PlugInInfoPv4Vol  *float64 `json:"plugInInfoPv4Vol,omitempty"`
+	PlugInInfoPv4Amp  *float64 `json:"plugInInfoPv4Amp,omitempty"`
+	PlugInInfoPv4Flag *bool    `json:"plugInInfoPv4Flag,omitempty"`
+}
+
+// StreamSystemParams holds system configuration parameters for Stream devices
+type StreamSystemParams struct {
+	ModuleWifiRssi *float64 `json:"moduleWifiRssi,omitempty"`
+	Brightness     *float64 `json:"brightness,omitempty"`
+	UtcTimezone    *float64 `json:"utcTimezone,omitempty"`
+	UtcTimezoneId  *string  `json:"utcTimezoneId,omitempty"`
+	DevCtrlStatus  *float64 `json:"devCtrlStatus,omitempty"`
+}
+
+// ExtractStreamPowerParams extracts power parameters from MQTT payload
+func ExtractStreamPowerParams(payload []byte) StreamPowerParams {
+	var params StreamPowerParams
+	json.Unmarshal(payload, &params)
+	return params
+}
+
+// ExtractStreamBMSParams extracts BMS parameters from MQTT payload
+func ExtractStreamBMSParams(payload []byte) StreamBMSParams {
+	var params StreamBMSParams
+	json.Unmarshal(payload, &params)
+	return params
+}
+
+// ExtractStreamCMSParams extracts CMS parameters from MQTT payload
+func ExtractStreamCMSParams(payload []byte) StreamCMSParams {
+	var params StreamCMSParams
+	json.Unmarshal(payload, &params)
+	return params
+}
+
+// ExtractStreamPVParams extracts PV parameters from MQTT payload
+func ExtractStreamPVParams(payload []byte) StreamPVParams {
+	var params StreamPVParams
+	json.Unmarshal(payload, &params)
+	return params
+}
+
+// ExtractStreamSystemParams extracts system parameters from MQTT payload
+func ExtractStreamSystemParams(payload []byte) StreamSystemParams {
+	var params StreamSystemParams
+	json.Unmarshal(payload, &params)
+	return params
+}
