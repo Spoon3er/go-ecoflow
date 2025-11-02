@@ -46,41 +46,19 @@ type MqttCredentialsResponse struct {
 // {"soc":22,"num":0,"cellVol":[3259,3258,3257],"cellTemp":[20,19],...}
 type MqttDeviceParams map[string]any
 
-// MqttSetRequest represents a command request to be published to MQTT set topic
-// Topic: /open/{certificateAccount}/{sn}/set
-// Example:
-//
-//	{
-//	  "id": "1681872798000",
-//	  "version": "1.0",
-//	  "moduleType": 1,
-//	  "operateType": "TCP",
-//	  "params": {
-//	    "id": 123,
-//	    "enabled": 1
-//	  }
-//	}
-type MqttSetRequest struct {
-	Id          string         `json:"id"`
-	Version     string         `json:"version"`
-	ModuleType  int            `json:"moduleType,omitempty"`
-	OperateType string         `json:"operateType,omitempty"`
-	Params      map[string]any `json:"params"`
-}
-
 // MqttSetReply represents the response received from MQTT set_reply topic
 // Topic: /open/{certificateAccount}/{sn}/set_reply
 // The ID field matches the request ID for correlation
 // Example:
 //
 //	{
-//	  "id": "1681872798000",
+//	  "id": 1681872798000,
 //	  "code": "0",
 //	  "message": "Success"
 //	}
 type MqttSetReply struct {
-	Id      string `json:"id"`
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	Id      int    `json:"id"`
+	Code    string `json:"code,omitempty"`
+	Message string `json:"message,omitempty"`
 	Data    any    `json:"data,omitempty"`
 }

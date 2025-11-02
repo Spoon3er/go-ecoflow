@@ -214,23 +214,18 @@ func (c *Client) GetDeviceList(ctx context.Context) (*DeviceListResponse, error)
 
 type CmdSetRequest struct {
 	Id          string         `json:"id"`
+	Version     string         `json:"version,omitempty"`
+	Sn          string         `json:"sn"`
+	CmdId       int            `json:"cmdId,omitempty"`
+	CmdFunc     int            `json:"cmdFunc,omitempty"`
+	DirDest     int            `json:"dirDest,omitempty"`
+	DirSrc      int            `json:"dirSrc,omitempty"`
+	Dest        int            `json:"dest,omitempty"`
+	NeedAck     bool           `json:"needAck,omitempty"`
 	OperateType string         `json:"operateType,omitempty"`
 	ModuleType  ModuleType     `json:"moduleType,omitempty"`
 	CmdCode     string         `json:"cmdCode,omitempty"`
-	Sn          string         `json:"sn"`
 	Params      map[string]any `json:"params"`
-}
-
-type CmdUltraSetRequest struct {
-	Id      string         `json:"id"`
-	CmdId   int            `json:"cmdId"`
-	CmdFunc int            `json:"cmdFunc"`
-	DirDest int            `json:"dirDest"`
-	DirSrc  int            `json:"dirSrc"`
-	Dest    int            `json:"dest"`
-	NeedAck bool           `json:"needAck"`
-	Sn      string         `json:"sn"`
-	Params  map[string]any `json:"params"`
 }
 
 type CmdSetResponse struct {
@@ -370,30 +365,53 @@ func (c *Client) GetDeviceAllParameters(ctx context.Context, deviceSn string) (m
 	return dataMap, err
 }
 
-type GetHistoricalDataResponse struct {
-	Code            string           `json:"code"`
-	Message         string           `json:"message"`
-	Data            []GetCmdResponse `json:"data"`
-	EagleEyeTraceID string           `json:"eagleEyeTraceId"`
-	Tid             string           `json:"tid"`
+// Each point contains a measurement value with its unit and metadata
+type HistoricalDataPoint struct {
+	Unit       string `json:"unit"`
+	IndexName  string `json:"indexName"`
+	IndexValue string `json:"indexValue"`
+	Extra      string `json:"extra,omitempty"`
 }
 
-type GetHistoricalDataParams struct {
+// This represents the inner "data" field of the API response
+type HistoricalDataResult struct {
+	Code            string                `json:"code"`
+	Message         string                `json:"message"`
+	Data            []HistoricalDataPoint `json:"data"`
+	EagleEyeTraceID string                `json:"eagleEyeTraceId"`
+	Tid             string                `json:"tid"`
+}
+
+// Ecoflow API uses a double-wrapped response structure with outer and inner response codes
+type HistoricalDataResponse struct {
+	Code            string               `json:"code"`
+	Message         string               `json:"message"`
+	Data            HistoricalDataResult `json:"data"`
+	EagleEyeTraceID string               `json:"eagleEyeTraceId"`
+	Tid             string               `json:"tid"`
+}
+
+type HistoricalDataParams struct {
 	BeginTime string `json:"beginTime"`
 	EndTime   string `json:"endTime"`
 	Code      string `json:"code"`
 }
 
-type GetHistoricalDataRequest struct {
-	Sn     string                  `json:"sn"`
-	Params GetHistoricalDataParams `json:"params"`
+type HistoricalDataRequest struct {
+	Sn     string               `json:"sn"`
+	Params HistoricalDataParams `json:"params"`
 }
 
 // GetDeviceHistoricalData retrieves historical data for a specific device based on provided parameters.
 // It requires the device serial number and a list of parameters to fetch historical data for.
+// The response contains historical measurements with timestamps and values.
 // If the response parameter "code" is not "0", then there is an error and the error message is returned.
-
-func (c *Client) GetDeviceHistoricalData(ctx context.Context, deviceSn string, params *GetHistoricalDataParams) (*GetHistoricalDataResponse, error) {
+//
+// Example response structure:
+// - Outer response: Contains overall API call status
+// - Inner data: Contains the actual historical data points
+// - Each data point: Contains unit, indexName, indexValue, and optional extra metadata
+func (c *Client) GetDeviceHistoricalData(ctx context.Context, deviceSn string, params *HistoricalDataParams) (*HistoricalDataResponse, error) {
 	if params == nil {
 		return nil, errors.New("parameters are mandatory")
 	}
@@ -401,7 +419,7 @@ func (c *Client) GetDeviceHistoricalData(ctx context.Context, deviceSn string, p
 		return nil, errors.New("device SN is mandatory")
 	}
 
-	req := GetHistoricalDataRequest{
+	req := HistoricalDataRequest{
 		Sn:     deviceSn,
 		Params: *params,
 	}
@@ -424,17 +442,17 @@ func (c *Client) GetDeviceHistoricalData(ctx context.Context, deviceSn string, p
 		return nil, err
 	}
 
-	var getHistoricalDataResponse *GetHistoricalDataResponse
+	var historicalDataResponse *HistoricalDataResponse
 
-	err = json.Unmarshal(response, &getHistoricalDataResponse)
+	err = json.Unmarshal(response, &historicalDataResponse)
 	if err != nil {
 		return nil, err
 	}
 
-	if getHistoricalDataResponse.Code != "0" {
-		return getHistoricalDataResponse, fmt.Errorf("can't get historical data, error code %s", getHistoricalDataResponse.Code)
+	if historicalDataResponse.Code != "0" {
+		return historicalDataResponse, fmt.Errorf("can't get historical data, error code %s", historicalDataResponse.Code)
 	}
 
-	return getHistoricalDataResponse, nil
+	return historicalDataResponse, nil
 
 }

@@ -47,7 +47,12 @@ const (
 func (s *Stream) SetPowerSocket(ctx context.Context, switchDevice SwitchDevice, action bool) (*CmdSetResponse, error) {
 	params := make(map[string]any)
 	params[string(switchDevice)] = action
-	return s.setParameter(ctx, params)
+
+	request, err := BuildRequest(s.sn, params)
+	if err != nil {
+		return nil, err
+	}
+	return s.c.SetDeviceParameter(ctx, request)
 }
 
 // SetBackupReserveLevel Set backup reserve level (3-95)
@@ -57,8 +62,13 @@ func (s *Stream) SetBackupReserveLevel(ctx context.Context, lvl int) (*CmdSetRes
 		return nil, fmt.Errorf("lvl must be between 3 and 95, got %d", lvl)
 	}
 	params := make(map[string]any)
-	params["backupReverseSoc"] = lvl
-	return s.setParameter(ctx, params)
+	params["cfgBackupReverseSoc"] = lvl
+
+	request, err := BuildRequest(s.sn, params)
+	if err != nil {
+		return nil, err
+	}
+	return s.c.SetDeviceParameter(ctx, request)
 }
 
 // SetChargeLimit Set charge limit (50-95)
@@ -69,7 +79,12 @@ func (s *Stream) SetChargeLimit(ctx context.Context, limit int) (*CmdSetResponse
 	}
 	params := make(map[string]any)
 	params["cmsMaxChgSoc"] = limit
-	return s.setParameter(ctx, params)
+
+	request, err := BuildRequest(s.sn, params)
+	if err != nil {
+		return nil, err
+	}
+	return s.c.SetDeviceParameter(ctx, request)
 }
 
 // SetDisChargeLimit Set charge limit (3-50)
@@ -80,7 +95,12 @@ func (s *Stream) SetDisChargeLimit(ctx context.Context, limit int) (*CmdSetRespo
 	}
 	params := make(map[string]any)
 	params["cmsMinDsgSoc"] = limit
-	return s.setParameter(ctx, params)
+
+	request, err := BuildRequest(s.sn, params)
+	if err != nil {
+		return nil, err
+	}
+	return s.c.SetDeviceParameter(ctx, request)
 }
 
 // SetOperatingMode Set operating mode (SelfPoweredMode/AIMode)
@@ -103,7 +123,11 @@ func (s *Stream) SetOperatingMode(ctx context.Context, mode operatingMode, value
 		},
 	}
 
-	return s.setParameter(ctx, params)
+	request, err := BuildRequest(s.sn, params)
+	if err != nil {
+		return nil, err
+	}
+	return s.c.SetDeviceParameter(ctx, request)
 }
 
 // SetFeedInControl Set feed-in control (on/off)
@@ -120,54 +144,58 @@ func (s *Stream) SetFeedInControl(ctx context.Context, value string) (*CmdSetRes
 		return nil, fmt.Errorf("value must be 'on' or 'off', got %s", value)
 	}
 
-	return s.setParameter(ctx, params)
+	request, err := BuildRequest(s.sn, params)
+	if err != nil {
+		return nil, err
+	}
+	return s.c.SetDeviceParameter(ctx, request)
 }
 
-// GetEnergyIndependence
+// GetEnergyIndependence retrieves energy independence data for the specified time range
 // {"sn":"BK2000000000001","params":{"beginTime":"2023-10-01 00:00:00","endTime":"2023-10-10 23:59:59","code":"BK621-App-HOME-INDEPENDENCE-PERCENT-FLOW-indep-progress_bar-NOTDISTINGUISH-MASTER_DATA"}}
-func (s *Stream) GetEnergyIndependence(ctx context.Context, beginTime, endTime time.Time) (*GetHistoricalDataResponse, error) {
+func (s *Stream) GetEnergyIndependence(ctx context.Context, beginTime, endTime time.Time) (*HistoricalDataResponse, error) {
 	code := "BK621-App-HOME-INDEPENDENCE-PERCENT-FLOW-indep-progress_bar-NOTDISTINGUISH-MASTER_DATA"
 	return s.getHistoricalData(ctx, beginTime, endTime, code)
 }
 
-// GetEnvironmentalImpact
+// GetEnvironmentalImpact retrieves environmental impact data for the specified time range
 // {"sn":"BK2000000000001","params":{"beginTime":"2023-10-01 00:00:00","endTime":"2023-10-10 23:59:59","code":"BK621-App-HOME-SAVING-CURRENCY-FLOW-earnings-progress_arc-NOTDISTINGUISH-MASTER_DATA"}}
-func (s *Stream) GetEnvironmentalImpact(ctx context.Context, beginTime, endTime time.Time) (*GetHistoricalDataResponse, error) {
+func (s *Stream) GetEnvironmentalImpact(ctx context.Context, beginTime, endTime time.Time) (*HistoricalDataResponse, error) {
 	code := "BK621-App-HOME-CO2-WEIGHT-FLOW-impact-progress_arc-NOTDISTINGUISH-MASTER_DATA"
 	return s.getHistoricalData(ctx, beginTime, endTime, code)
 }
 
-// GetTotalEnergySavings
+// GetTotalEnergySavings retrieves total energy savings data for the specified time range
 // {"sn":"BK2000000000001","params":{"beginTime":"2023-10-01 00:00:00","endTime":"2023-10-10 23:59:59","code":"BK621-App-HOME-SOLAR-ENERGY-FLOW-solor-line-NOTDISTINGUISH-MASTER_DATA"}}
-func (s *Stream) GetTotalEnergySavings(ctx context.Context, beginTime, endTime time.Time) (*GetHistoricalDataResponse, error) {
+func (s *Stream) GetTotalEnergySavings(ctx context.Context, beginTime, endTime time.Time) (*HistoricalDataResponse, error) {
 	code := "BK621-App-HOME-SOLAR-ENERGY-FLOW-solor-line-NOTDISTINGUISH-MASTER_DATA"
 	return s.getHistoricalData(ctx, beginTime, endTime, code)
 }
 
-// GetElectricityConsumption
+// GetElectricityConsumption retrieves electricity consumption data for the specified time range
 // {"sn":"BK2000000000001","params":{"beginTime":"2023-10-01 00:00:00","endTime":"2023-10-10 23:59:59","code":"BK621-App-HOME-LOAD-ENERGY-FLOW-consumption-prop_arc-NOTDISTINGUISH-MASTER_DATA"}}
-func (s *Stream) GetElectricityConsumption(ctx context.Context, beginTime, endTime time.Time) (*GetHistoricalDataResponse, error) {
+func (s *Stream) GetElectricityConsumption(ctx context.Context, beginTime, endTime time.Time) (*HistoricalDataResponse, error) {
 	code := "BK621-App-HOME-LOAD-ENERGY-FLOW-consumption-prop_arc-NOTDISTINGUISH-MASTER_DATA"
 	return s.getHistoricalData(ctx, beginTime, endTime, code)
 }
 
-// GetGrid
+// GetGrid retrieves grid energy data for the specified time range
 // {"sn":"BK2000000000001","params":{"beginTime":"2023-10-01 00:00:00","endTime":"2023-10-10 23:59:59","code":"BK621-App-HOME-GRID-ENERGY-FLOW-grid_prop_bar-NOTDISTINGUISH-MASTER_DATA"}}
-func (s *Stream) GetGrid(ctx context.Context, beginTime, endTime time.Time) (*GetHistoricalDataResponse, error) {
+func (s *Stream) GetGrid(ctx context.Context, beginTime, endTime time.Time) (*HistoricalDataResponse, error) {
 	code := "BK621-App-HOME-GRID-ENERGY-FLOW-grid_prop_bar-NOTDISTINGUISH-MASTER_DATA"
 	return s.getHistoricalData(ctx, beginTime, endTime, code)
 }
 
-// GetBatteryCharging/DischargingPower
+// GetBatteryChargingDischargingPower retrieves battery charging/discharging power data for the specified time range
 // {"sn":"BK2000000000001","params":{"beginTime":"2023-10-01 00:00:00","endTime":"2023-10-10 23:59:59","code":"BK621-App-HOME-SOC-ENERGY-FLOW-battery-prop_bar-NOTDISTINGUISH-MASTER_DATA"}}
-func (s *Stream) GetBatteryChargingDischargingPower(ctx context.Context, beginTime, endTime time.Time) (*GetHistoricalDataResponse, error) {
+func (s *Stream) GetBatteryChargingDischargingPower(ctx context.Context, beginTime, endTime time.Time) (*HistoricalDataResponse, error) {
 	code := "BK621-App-HOME-SOC-ENERGY-FLOW-battery-prop_bar-NOTDISTINGUISH-MASTER_DATA"
 	return s.getHistoricalData(ctx, beginTime, endTime, code)
 }
 
 // getHistoricalData internal helper function to get historical data from the Stream device
-func (s *Stream) getHistoricalData(ctx context.Context, beginTime, endTime time.Time, code string) (*GetHistoricalDataResponse, error) {
-	params := GetHistoricalDataParams{}
+func (s *Stream) getHistoricalData(ctx context.Context, beginTime, endTime time.Time, code string) (*HistoricalDataResponse, error) {
+	params := HistoricalDataParams{}
 	params.BeginTime = beginTime.Format("2006-01-02 15:04:05")
 	params.EndTime = endTime.Format("2006-01-02 15:04:05")
 	params.Code = code
@@ -185,32 +213,22 @@ func (s *Stream) GetAllParameters(ctx context.Context) (map[string]any, error) {
 	return s.c.GetDeviceAllParameters(ctx, s.sn)
 }
 
-// setParameter internal helper function to set device parameters
-func (s *Stream) setParameter(ctx context.Context, params map[string]any) (*CmdSetResponse, error) {
-	cmdReq := CmdUltraSetRequest{
-		Id:      fmt.Sprint(time.Now().UnixMilli()),
-		CmdId:   cmdId,
-		CmdFunc: cmdFunc,
-		DirDest: dirDest,
-		DirSrc:  dirSrc,
-		Dest:    dest,
-		NeedAck: needAck,
-		Sn:      s.sn,
-		Params:  params,
+// BuildRequest internal helper function to set device parameters
+func BuildRequest(sn string, params map[string]any) (map[string]any, error) {
+	req := map[string]any{
+		"id":      int(time.Now().UnixMilli()),
+		"version": "1.0",
+		"cmdId":   cmdId,
+		"cmdFunc": cmdFunc,
+		"dirDest": dirDest,
+		"dirSrc":  dirSrc,
+		"dest":    dest,
+		"needAck": needAck,
+		"sn":      sn,
+		"params":  params,
 	}
 
-	jsonData, err := json.Marshal(cmdReq)
-	if err != nil {
-		return nil, err
-	}
-
-	var req map[string]any
-	err = json.Unmarshal(jsonData, &req)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.c.SetDeviceParameter(ctx, req)
+	return req, nil
 }
 
 // MQTT Quota Parameters for Stream devices
@@ -295,37 +313,49 @@ type StreamSystemParams struct {
 	DevCtrlStatus  *float64 `json:"devCtrlStatus,omitempty"`
 }
 
-// ExtractStreamPowerParams extracts power parameters from MQTT payload
-func ExtractStreamPowerParams(payload []byte) StreamPowerParams {
+// Helper functions to extract parameters from MQTT payloads
+// Each function takes a JSON payload as input and returns the corresponding struct
+func ExtractStreamPowerParams(payload []byte) (StreamPowerParams, error) {
 	var params StreamPowerParams
-	json.Unmarshal(payload, &params)
-	return params
+	err := json.Unmarshal(payload, &params)
+	if err != nil {
+		return StreamPowerParams{}, err
+	}
+	return params, nil
 }
 
-// ExtractStreamBMSParams extracts BMS parameters from MQTT payload
-func ExtractStreamBMSParams(payload []byte) StreamBMSParams {
+func ExtractStreamBMSParams(payload []byte) (StreamBMSParams, error) {
 	var params StreamBMSParams
-	json.Unmarshal(payload, &params)
-	return params
+	err := json.Unmarshal(payload, &params)
+	if err != nil {
+		return StreamBMSParams{}, err
+	}
+	return params, nil
 }
 
-// ExtractStreamCMSParams extracts CMS parameters from MQTT payload
-func ExtractStreamCMSParams(payload []byte) StreamCMSParams {
+func ExtractStreamCMSParams(payload []byte) (StreamCMSParams, error) {
 	var params StreamCMSParams
-	json.Unmarshal(payload, &params)
-	return params
+	err := json.Unmarshal(payload, &params)
+	if err != nil {
+		return StreamCMSParams{}, err
+	}
+	return params, nil
 }
 
-// ExtractStreamPVParams extracts PV parameters from MQTT payload
-func ExtractStreamPVParams(payload []byte) StreamPVParams {
+func ExtractStreamPVParams(payload []byte) (StreamPVParams, error) {
 	var params StreamPVParams
-	json.Unmarshal(payload, &params)
-	return params
+	err := json.Unmarshal(payload, &params)
+	if err != nil {
+		return StreamPVParams{}, err
+	}
+	return params, nil
 }
 
-// ExtractStreamSystemParams extracts system parameters from MQTT payload
-func ExtractStreamSystemParams(payload []byte) StreamSystemParams {
+func ExtractStreamSystemParams(payload []byte) (StreamSystemParams, error) {
 	var params StreamSystemParams
-	json.Unmarshal(payload, &params)
-	return params
+	err := json.Unmarshal(payload, &params)
+	if err != nil {
+		return StreamSystemParams{}, err
+	}
+	return params, nil
 }

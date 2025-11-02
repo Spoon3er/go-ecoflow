@@ -27,7 +27,7 @@ type MqttClientConfiguration struct {
 type MqttClient struct {
 	Client           mqtt.Client
 	connectionConfig *MqttConnectionConfig
-	pendingReplies   map[string]chan *MqttSetReply // for request/response correlation
+	pendingReplies   map[int]chan *MqttSetReply // for request/response correlation
 	repliesMutex     sync.RWMutex
 }
 
@@ -58,7 +58,7 @@ func newMqttClient(connectionConfig *MqttConnectionConfig, config MqttClientConf
 	return &MqttClient{
 		Client:           mqtt.NewClient(opts),
 		connectionConfig: connectionConfig,
-		pendingReplies:   make(map[string]chan *MqttSetReply),
+		pendingReplies:   make(map[int]chan *MqttSetReply),
 	}
 }
 
@@ -153,7 +153,7 @@ func (m *MqttClient) SubscribeSetReply(deviceSn string) error {
 
 // PublishSetCommand publishes a command to the device (fire and forget, no reply)
 // Topic: /open/{certificateAccount}/{deviceSn}/set
-func (m *MqttClient) PublishSetCommand(deviceSn string, request *MqttSetRequest) error {
+func (m *MqttClient) PublishSetCommand(deviceSn string, request map[string]any) error {
 	topic := fmt.Sprintf("/open/%s/%s/set", m.connectionConfig.CertificateAccount, deviceSn)
 
 	payload, err := json.Marshal(request)
@@ -172,7 +172,7 @@ func (m *MqttClient) PublishSetCommand(deviceSn string, request *MqttSetRequest)
 // PublishSetCommandWithReply publishes a command and waits for a reply
 // Topic: /open/{certificateAccount}/{deviceSn}/set
 // Reply on: /open/{certificateAccount}/{deviceSn}/set_reply
-func (m *MqttClient) PublishSetCommandWithReply(ctx context.Context, deviceSn string, request *MqttSetRequest, timeout time.Duration) (*MqttSetReply, error) {
+func (m *MqttClient) PublishSetCommandWithReply(ctx context.Context, deviceSn string, request map[string]any, timeout time.Duration) (*MqttSetReply, error) {
 	// Ensure we're subscribed to set_reply topic
 	if err := m.SubscribeSetReply(deviceSn); err != nil {
 		return nil, err
@@ -180,14 +180,28 @@ func (m *MqttClient) PublishSetCommandWithReply(ctx context.Context, deviceSn st
 
 	// Create reply channel
 	replyCh := make(chan *MqttSetReply, 1)
+
+	// Safe type assertion for request ID
+	var requestId int
+	if idValue, exists := request["id"]; exists && idValue != nil {
+		if id, ok := idValue.(int); ok {
+			requestId = id
+		} else {
+			return nil, fmt.Errorf("request 'id' field must be an int, got %T", idValue)
+		}
+	} else {
+		return nil, fmt.Errorf("request 'id' field is required and cannot be nil")
+	}
+
 	m.repliesMutex.Lock()
-	m.pendingReplies[request.Id] = replyCh
+	m.pendingReplies[requestId] = replyCh
 	m.repliesMutex.Unlock()
 
 	// Cleanup
 	defer func() {
+
 		m.repliesMutex.Lock()
-		delete(m.pendingReplies, request.Id)
+		delete(m.pendingReplies, requestId)
 		m.repliesMutex.Unlock()
 		close(replyCh)
 	}()

@@ -4,8 +4,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/Spoon3er/go-ecoflow"
 )
@@ -38,12 +40,7 @@ func main() {
 	ctx := context.Background()
 
 	// get set / get functions for power stations. PRO version is not currently implemented
-	ps := client.GetStream("SN_HERE")
-
-	//set functions
-	// ps.SetPowerSocket(ctx, ecoflow.AC1, true)
-	// ps.SetBackupReserveLevel(ctx, 20)
-	// ps.SetOperatingMode(ctx, ecoflow.SelfPoweredMode, true)
+	ps := client.GetStream(os.Getenv("DEVICE_SN"))
 
 	// get functions
 	params, err := ps.GetAllParameters(ctx)
@@ -53,19 +50,40 @@ func main() {
 		slog.Info("Power Station All Parameters", "params", params)
 	}
 
-	specificParams, err := ps.GetParameter(ctx, []string{"powGetSysLoad", "cmsBattSoc"})
+	specificParams, err := ps.GetParameter(ctx, []string{"powGetSysLoad", "cmsBattSoc", "backupReverseSoc"})
 	if err != nil {
 		slog.Error("Failed to get parameters", "error", err)
 	} else {
 		slog.Info("Power Station Specific Parameters", "params", specificParams)
 	}
 
-	// get set / get functions for smart meters
-	sm := client.GetSmartMeter("SN_HERE")
-	params, err = sm.GetAllParameters(ctx)
-	if err != nil {
-		slog.Error("Failed to get parameters", "error", err)
-	} else {
-		slog.Info("Smart Meter All Parameters", "params", params)
+	//set functions
+	// Example: Set Backup Reserve Level to 24% if it's not already set
+	// JSON parser returns numbers as float64 by default so we need to convert
+	var currentLevel int
+	switch v := specificParams.Data["backupReverseSoc"].(type) {
+	case float64:
+		currentLevel = int(v)
+	case int:
+		currentLevel = v
+	default:
+		slog.Error("Unexpected type for backupReverseSoc", "type", fmt.Sprintf("%T", v))
+		return
 	}
+	slog.Info("Current Backup Reverse SOC Level", "level", currentLevel)
+
+	var backupReverseLevel = 23
+	if currentLevel != backupReverseLevel {
+		ps.SetBackupReserveLevel(ctx, backupReverseLevel)
+	}
+
+	//History data retrieval examples
+	beginTime, endTime := time.Now().AddDate(0, 0, -1), time.Now()
+	historyData, err := ps.GetBatteryChargingDischargingPower(ctx, beginTime, endTime)
+	if err != nil {
+		slog.Error("Failed to get history data", "error", err)
+	} else {
+		slog.Info("Power Station History Data", "data", historyData)
+	}
+
 }

@@ -41,18 +41,18 @@ func main() {
 
 	// Subscribe to device quota topic to receive real-time parameter updates
 	// Topic: /open/{certificateAccount}/{sn}/quota
-	err = mqttClient.SubscribeDeviceQuota(deviceSn, quotaMessageHandler)
-	if err != nil {
-		log.Fatalf("Unable to subscribe to quota: %+v\n", err)
-	}
+	// err = mqttClient.SubscribeDeviceQuota(deviceSn, quotaMessageHandler)
+	// if err != nil {
+	// 	log.Fatalf("Unable to subscribe to quota: %+v\n", err)
+	// }
 
-	fmt.Println("Listening for device updates...")
-	fmt.Println("Press Ctrl+C to exit...")
+	// fmt.Println("Listening for device updates...")
+	// fmt.Println("Press Ctrl+C to exit...")
 
 	// Example: Send a command via MQTT (optional)
 	// This demonstrates the set/set_reply pattern
 	// Commented out for now to focus on receiving messages
-	// go sendExampleCommand(mqttClient, deviceSn)
+	go sendExampleCommand(mqttClient, deviceSn)
 
 	// Setup signal handling to gracefully shutdown on Ctrl+C
 	sigChan := make(chan os.Signal, 1)
@@ -67,20 +67,16 @@ func main() {
 }
 
 func sendExampleCommand(client *ecoflow.MqttClient, deviceSn string) {
-	// Wait a bit for subscription to be ready
-	time.Sleep(5 * time.Second)
-
 	// Example: Send a command with reply
-	request := &ecoflow.MqttSetRequest{
-		Id:          fmt.Sprintf("%d", time.Now().UnixMilli()),
-		Version:     "1.0",
-		ModuleType:  1,
-		OperateType: "TCP",
-		Params: map[string]any{
-			"id":      123,
-			"enabled": 1,
-		},
+	params := map[string]any{
+		"cfgBackupReverseSoc": 24, // Set Backup Reserve Level to 24%
 	}
+	request, err := ecoflow.BuildRequest(deviceSn, params)
+	if err != nil {
+		log.Printf("Failed to build request: %+v\n", err)
+		return
+	}
+	fmt.Printf("Sending command to set Backup Reserve Level to %v\n", request["params"])
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -113,23 +109,43 @@ var quotaMessageHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.
 	fmt.Printf("\n[%s] Received %d parameters\n", time.Now().Format("15:04:05"), len(params))
 
 	// Extract power parameters using Stream device types
-	powerParams := ecoflow.ExtractStreamPowerParams(payload)
+	powerParams, err := ecoflow.ExtractStreamPowerParams(payload)
+	if err != nil {
+		fmt.Printf("Unable to extract power parameters: %+v\n", err)
+		return
+	}
 	// Now you can access: powerParams.PowGetSysGrid, etc.
 
 	// Extract BMS parameters
-	bmsParams := ecoflow.ExtractStreamBMSParams(payload)
+	bmsParams, err := ecoflow.ExtractStreamBMSParams(payload)
+	if err != nil {
+		fmt.Printf("Unable to extract BMS parameters: %+v\n", err)
+		return
+	}
 	// Now you can access: bmsParams.BmsBattSoc, etc.
 
 	// Extract CMS parameters
-	cmsParams := ecoflow.ExtractStreamCMSParams(payload)
+	cmsParams, err := ecoflow.ExtractStreamCMSParams(payload)
+	if err != nil {
+		fmt.Printf("Unable to extract CMS parameters: %+v\n", err)
+		return
+	}
 	// Now you can access: cmsParams.CmsBattSoc, etc.
 
 	// Extract PV parameters
-	pvParams := ecoflow.ExtractStreamPVParams(payload)
+	pvParams, err := ecoflow.ExtractStreamPVParams(payload)
+	if err != nil {
+		fmt.Printf("Unable to extract PV parameters: %+v\n", err)
+		return
+	}
 	// Now you can access: pvParams.PlugInInfoPvVol, etc.
 
 	// Extract system parameters
-	sysParams := ecoflow.ExtractStreamSystemParams(payload)
+	sysParams, err := ecoflow.ExtractStreamSystemParams(payload)
+	if err != nil {
+		fmt.Printf("Unable to extract system parameters: %+v\n", err)
+		return
+	}
 	// Now you can access: sysParams.ModuleWifiRssi, etc.
 
 	// Pretty print for display (optional)
