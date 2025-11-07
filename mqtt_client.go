@@ -8,7 +8,6 @@ import (
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	"github.com/google/uuid"
 )
 
 const (
@@ -36,7 +35,7 @@ type MqttClient struct {
 func newMqttClient(connectionConfig *MqttConnectionConfig, config MqttClientConfiguration) *MqttClient {
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(fmt.Sprintf("%s://%s:%s", connectionConfig.Protocol, connectionConfig.Url, connectionConfig.Port))
-	opts.SetClientID(fmt.Sprintf("%s_%s", connectionConfig.CertificateAccount, uuid.New().String()))
+	opts.SetClientID(fmt.Sprintf("%s_go-ecoflow", connectionConfig.CertificateAccount))
 	opts.SetUsername(connectionConfig.CertificateAccount)
 	opts.SetPassword(connectionConfig.CertificatePassword)
 	opts.SetConnectRetry(true)

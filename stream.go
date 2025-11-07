@@ -42,6 +42,8 @@ const (
 	AIMode          operatingMode = "operateIntelligentScheduleModeOpen"
 )
 
+// REST API structures for Stream devices
+
 // SetPowerSocket Devicename (AC1/AC2) on/off
 // {"sn": "BKW2000000000001", "CmdId": 17, "CmdFunc": 254, "DirDest": 1, "DirSrc": 1, "Dest": 2, "NeedAck": true, "params": {"cfgRelay2Onoff": true}}
 func (s *Stream) SetPowerSocket(ctx context.Context, switchDevice SwitchDevice, action bool) (*CmdSetResponse, error) {
@@ -197,7 +199,9 @@ func (s *Stream) GetBatteryChargingDischargingPower(ctx context.Context, beginTi
 func (s *Stream) getHistoricalData(ctx context.Context, beginTime, endTime time.Time, code string) (*HistoricalDataResponse, error) {
 	params := HistoricalDataParams{}
 	params.BeginTime = beginTime.Format("2006-01-02 15:04:05")
-	params.EndTime = endTime.Format("2006-01-02 15:04:05")
+	if endTime != (time.Time{}) {
+		params.EndTime = endTime.Format("2006-01-02 15:04:05")
+	}
 	params.Code = code
 
 	return s.c.GetDeviceHistoricalData(ctx, s.sn, &params)
