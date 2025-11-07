@@ -78,8 +78,11 @@ func main() {
 	}
 
 	//History data retrieval examples
-	beginTime, endTime := time.Now().AddDate(0, 0, -1), time.Now()
-	historyData, err := ps.GetBatteryChargingDischargingPower(ctx, beginTime, endTime)
+	begin := "2025-11-01 18:00:00"
+	end := "2025-11-01 20:00:00"
+	beginTime, _ := time.Parse("2006-01-02 15:04:05", begin)
+	endTime, _ := time.Parse("2006-01-02 15:04:05", end)
+	historyData, err := ps.GetGrid(ctx, beginTime, endTime)
 	if err != nil {
 		slog.Error("Failed to get history data", "error", err)
 	} else {

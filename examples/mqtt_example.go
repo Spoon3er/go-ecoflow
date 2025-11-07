@@ -23,6 +23,7 @@ func main() {
 	var deviceSn = os.Getenv("DEVICE_SN")
 
 	client := ecoflow.NewEcoflowClient(accessKey, secretKey)
+	log.Println("Created Ecoflow client")
 
 	// Initialize MQTT using the same client
 	mqttConfig := ecoflow.MqttClientConfiguration{
@@ -36,23 +37,25 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to initialize MQTT: %+v\n", err)
 	}
+	log.Println("Initialized MQTT in Ecoflow client")
 
 	mqttClient := client.GetMqttClient()
+	log.Println("Initialized MQTT client")
 
 	// Subscribe to device quota topic to receive real-time parameter updates
 	// Topic: /open/{certificateAccount}/{sn}/quota
-	// err = mqttClient.SubscribeDeviceQuota(deviceSn, quotaMessageHandler)
-	// if err != nil {
-	// 	log.Fatalf("Unable to subscribe to quota: %+v\n", err)
-	// }
+	err = mqttClient.SubscribeDeviceQuota(deviceSn, quotaMessageHandler)
+	if err != nil {
+		log.Fatalf("Unable to subscribe to quota: %+v\n", err)
+	}
 
-	// fmt.Println("Listening for device updates...")
-	// fmt.Println("Press Ctrl+C to exit...")
+	fmt.Println("Listening for device updates...")
+	fmt.Println("Press Ctrl+C to exit...")
 
 	// Example: Send a command via MQTT (optional)
 	// This demonstrates the set/set_reply pattern
 	// Commented out for now to focus on receiving messages
-	go sendExampleCommand(mqttClient, deviceSn)
+	// go sendExampleCommand(mqttClient, deviceSn)
 
 	// Setup signal handling to gracefully shutdown on Ctrl+C
 	sigChan := make(chan os.Signal, 1)
